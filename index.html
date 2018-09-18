@@ -44,6 +44,7 @@ https://stackoverflow.com/questions/40376176/add-existing-leaflet-polygons-to-an
             <ul role="tablist">
                 <li><a href="#modelos" title="Modelo de Propagaci&oacute;n" role="tab"><i class="fas fa-broadcast-tower"></i></a></li>
                 <li><a id="center-latlng" title="Cambiar posici&oacute;n" onclick="changeCenter()"><i class="fas fa-map-marker-alt"></i></a></li>
+                <li><a href="#radiiScale" title="Cambiar distancia de referencias" role="tab"><i class="fas fa-ruler"></i></a></li>
                 <li><a id="radii" class="text-success" onclick="toggleRadii()" title="Ver/ocultar distancias"><i class="fas fa-bullseye"></i></a></li>
             </ul>
         </div>
@@ -76,7 +77,7 @@ https://stackoverflow.com/questions/40376176/add-existing-leaflet-polygons-to-an
                         </div>
                         <div class="col form-group">
                             <label for="altura-tx">Altura Antena TX (m)</label>
-                            <input id="altura-tx" class="form-control form-control-sm" type="number" value="35">
+                            <input id="altura-tx" class="form-control form-control-sm" onchange="updatePerdidaCable(this)" type="number" value="35">
                         </div>
                     </div>
 
@@ -148,6 +149,25 @@ https://stackoverflow.com/questions/40376176/add-existing-leaflet-polygons-to-an
                 </table>
             </div>
 
+            <div class="leaflet-sidebar-pane" id="radiiScale">
+                <h1 class="leaflet-sidebar-header">
+                    Cambiar escala de radios
+                    <span class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></span>
+                </h1>
+                
+                <div class="form-row">
+                    <div class="col form-group">
+                        <label for="radiiCount">Cantidad</label>
+                        <input id="radiiCount" class="form-control form-control-sm" min="1" onchange="updateRadiiCount(this)" type="number" value="5">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col form-group">
+                        <label for="escala">Escala (km)</label>
+                        <input id="escala" class="form-control form-control-sm" min="1" onchange="updateScale(this)" type="number" value="10">
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -221,13 +241,20 @@ https://stackoverflow.com/questions/40376176/add-existing-leaflet-polygons-to-an
          * Lineas de raido [1km|10km|20km|30km|40km|50km]
          */
         var radii;
+        var radiiCount = 5;
         var radiiVisible = true;
-        var drawRadii = () => {
+        var drawRadii = (scale) => {
+            if(!scale){
+                scale = parseInt(document.getElementById('escala').value);
+            }
+
             if (radii) {
                 map.removeLayer(radii);
             }
+
             var refFeatures = [];
-            for (var r = 1; r < 60; r = r + 10) {
+            for (var r = 0; r < (radiiCount+1)*scale; r = r + scale) {
+                if(r==0){continue;}
 
                 refFeatures.push(L.marker(
                     L.GeometryUtil.destination(center, 45, r * 1000), {
@@ -242,14 +269,12 @@ https://stackoverflow.com/questions/40376176/add-existing-leaflet-polygons-to-an
                     color: 'grey',
                     weight: 1,
                     fillOpacity: 0.0
-                }));
-
-                if (r == 1) {
-                    r = r - 1;
-                }
+                }));                
             }
             radii = L.featureGroup(refFeatures);
-            map.addLayer(radii);
+            if(radiiVisible){
+                map.addLayer(radii);
+            }
         };
 
         var toggleRadii = () => {
@@ -317,6 +342,22 @@ https://stackoverflow.com/questions/40376176/add-existing-leaflet-polygons-to-an
             }
         };
 
+        var updateScale = (scale) =>{
+            var s = parseInt(scale.value);
+            console.log(`escala ${s}km`);
+            drawRadii(s);
+        };
+
+        var updateRadiiCount = (count)=>{
+            radiiCount = parseInt(count.value);           
+            console.log(`rings ${radiiCount}`);
+            updateScale(document.getElementById('escala'));
+        }
+
+        var updatePerdidaCable = (perdida) => {
+            var altura = parseFloat(document.getElementById('altura-tx').value);
+            document.getElementById('perdida-cable').value = (altura*5/100).toFixed(2);
+        };
 
         //startup
         drawRadii();
