@@ -42,7 +42,6 @@ var okumuraHata = {
                 okumuraHata.config.pcon - okumuraHata.config.pac;
         },
     },
-    table: document.getElementById('okumura-hata-table'),
     setConfig: () => {
         // FRECUENCIA (Mhz)
         okumuraHata.config.freq = parseFloat(document.querySelector('#frecuencia').value);
